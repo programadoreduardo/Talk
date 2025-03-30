@@ -39,7 +39,8 @@ export default function SignIn() {
                 value={email}
                 style={{ fontSize: hp(2) }}
                 className=' flex-1 font-semibold text-neutral-700'
-                placeholder='Email address' />
+                placeholder='Email address'
+                keyboardType='email-address' />
             </View>
             <View className='gap-3'>
               <View style={{ height: hp(7) }} className='flex-row gap-4 px-4 items-center rounded-2xl'>
