@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 export default {
   expo: {
     name: "talk",
@@ -17,7 +15,8 @@ export default {
       adaptiveIcon: {
         foregroundImage: "",
         backgroundColor: "#ffffff"
-      }
+      },
+      package: "com.anonymous.talk" // 🔥 Adicione essa linha
     },
     web: {
       bundler: "metro",
