@@ -5,18 +5,28 @@ import { StatusBar } from 'expo-status-bar';
 import { Octicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Loading from '../components/loading';
+import { useAuth } from '../context/authContext';
 
 export default function SignIn() {
   const router = useRouter()
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const {login} = useAuth()
  
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Sign In', "Please fill all the fields!")
+      Alert.alert('Login', "Por favor preencha todos os campos")
       return;
+    }
+    setLoading(true)
+    const response = await login(email, password)
+    setLoading(false);
+    console.log('sign in response: ', response)
+    if(!response.success){
+      Alert.alert('Login', "Email invalido")
+      return { success: false, msg: msg };
     }
   }
   return (

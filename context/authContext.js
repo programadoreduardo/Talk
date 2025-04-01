@@ -1,5 +1,6 @@
-import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+
 import { createContext, useContext, useEffect, useState } from "react";
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
@@ -25,16 +26,24 @@ export const AuthContextProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             // Lógica de login
+            const response = await signInWithEmailAndPassword(auth, email, password)
+            return {success: true}
         } catch (e) {
-            console.error(e);
+            let msg = e.message
+            if (msg.includes('(auth/invalid-email)')) msg = 'Insira um e-mail válido';
+            if (msg.includes('(auth/weak-password)')) msg = 'A senha deve ter pelo menos 6 caracteres';
+            if (msg.includes('(auth/invalid-credential)')) msg = 'Senha incorreta, confira sua senha';
+            return { success: false, msg: msg };
         }
     };
 
     const logout = async () => {
         try {
-            // Lógica de logout
+            await signOut(auth)
+            return { success: true }
+
         } catch (e) {
-            console.error(e);
+            return { success: false, msg: e.message, error: e }
         }
     };
 
@@ -48,13 +57,14 @@ export const AuthContextProvider = ({ children }) => {
                 profileUrl,
                 userId: response?.user?.uid,
                 createdAt: new Date()
-            }); // <-- Note que não há vírgula aqui
+            });
 
             return { success: true, data: response?.user }
         } catch (e) {
             let msg = e.message
             if (msg.includes('(auth/invalid-email)')) msg = 'Insira um e-mail válido';
             if (msg.includes('(auth/weak-password)')) msg = 'A senha deve ter pelo menos 6 caracteres';
+            if (msg.includes('(auth/email-already-in-use)')) msg = 'E-mail já cadastrado faça login';
             return { success: false, msg };
         }
     };
