@@ -24,13 +24,17 @@ export const AuthContextProvider = ({ children }) => {
         return unsub
     }, []);
 
-    const updateUserData = async (userId)=>{
-        const docRef = doc(db, 'users', userId)
+    const updateUserData = async (userId) => {
+        const docRef = doc(db, 'users', userId.uid); // Use userId.uid se userId for o objeto user
         const docSnap = await getDoc(docRef);
-
+    
         if(docSnap.exists()){
-            let data =docSnap.data()
-            setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId})
+            let data = docSnap.data();
+            setUser(prev => ({ 
+                ...prev, 
+                ...data, // Isso incluirá username, profileUrl e userId
+                uid: userId.uid // Mantém o uid do auth
+            }));
         }
     }
 

@@ -9,7 +9,7 @@ export default function Home() {
   }
   console.log('Users data: ', user)
   return (
-  <View className='pt-20'>
+  <View className='pt-20 flex-1 bg-white' >
     <Text>home</Text>
     <Button title=' Sair' onPress={handleLogout} />
   </View>
