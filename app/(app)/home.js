@@ -3,11 +3,11 @@ import React from 'react'
 import { useAuth } from '../../context/authContext'
 
 export default function Home() {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const handleLogout = async () => {
     await logout()
   }
-
+  console.log('Users data: ', user)
   return (
   <View className='pt-20'>
     <Text>home</Text>

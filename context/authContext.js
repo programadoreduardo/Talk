@@ -15,6 +15,7 @@ export const AuthContextProvider = ({ children }) => {
             if (user) {
                 setIsAuthenticated(true)
                 setUser(user)
+                updateUserData(user)
             } else {
                 setIsAuthenticated(false)
                 setUser(null)
@@ -23,16 +24,27 @@ export const AuthContextProvider = ({ children }) => {
         return unsub
     }, []);
 
+    const updateUserData = async (userId)=>{
+        const docRef = doc(db, 'users', userId)
+        const docSnap = await getDoc(docRef);
+
+        if(docSnap.exists()){
+            let data =docSnap.data()
+            setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId})
+        }
+    }
+
     const login = async (email, password) => {
         try {
             // Lógica de login
             const response = await signInWithEmailAndPassword(auth, email, password)
-            return {success: true}
+            return { success: true }
         } catch (e) {
             let msg = e.message
             if (msg.includes('(auth/invalid-email)')) msg = 'Insira um e-mail válido';
+            if (msg.includes('(auth/invalid-credential)')) msg = 'Senha e/ou e-mail incorreto, confira seus dados!';
             if (msg.includes('(auth/weak-password)')) msg = 'A senha deve ter pelo menos 6 caracteres';
-            if (msg.includes('(auth/invalid-credential)')) msg = 'Senha incorreta, confira sua senha';
+
             return { success: false, msg: msg };
         }
     };

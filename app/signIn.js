@@ -25,8 +25,8 @@ export default function SignIn() {
     setLoading(false);
     console.log('sign in response: ', response)
     if(!response.success){
-      Alert.alert('Login', "Email invalido")
-      return { success: false, msg: msg };
+      Alert.alert('Login', response.msg)
+      return 
     }
   }
   return (
@@ -39,7 +39,7 @@ export default function SignIn() {
         </View>
 
         <View className='gap-10'>
-          <Text style={{ fontSize: hp(4) }} className="font-bold tracking-wider text-center text-neutral-800"> Sign In</Text>
+          <Text style={{ fontSize: hp(4) }} className="font-bold tracking-wider text-center text-neutral-800"> Login</Text>
           {/* Inputs */}
           <View className='gap-4'>
             <View style={{ height: hp(7) }} className='flex-row gap-4 px-4 items-center rounded-2xl'>
@@ -74,7 +74,7 @@ export default function SignIn() {
                   </View>
                 ) : (
                   <TouchableOpacity onPress={handleLogin} style={{ height: hp(6.5) }} className='bg-blue-500 rounded-xl justify-center items-center'>
-                    <Text style={{ fontSize: hp(2.7) }} className=' text-white font-bold tracking-wider'>Sign In
+                    <Text style={{ fontSize: hp(2.7) }} className=' text-white font-bold tracking-wider'>Login
                     </Text>
                   </TouchableOpacity>
                 )
