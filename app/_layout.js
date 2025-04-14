@@ -30,6 +30,6 @@ export default function RootLayout() {
             <AuthContextProvider>
                 <MainLayout />
             </AuthContextProvider>
-        </MenuProvider>
+        </MenuProvider> 
     );
 }

@@ -41,7 +41,7 @@ export default function HomeHeader() {
                         }
                     }}>
                         <Image
-                            style={{ height: hp(4.3), aspectRatio: 1, borderRadius: 100 }}
+                            style={{ height: hp(8), aspectRatio: 1, borderRadius: 10 }}
                             source={user?.profileUrl}
                             placeholder={{ blurhash }}
                             transition={500}

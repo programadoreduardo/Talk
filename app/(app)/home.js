@@ -8,24 +8,27 @@ import { usersRef } from '../../firebaseConfig';
 
 export default function Home() {
   const { logout, user } = useAuth()
-  const [users, setUsers] = useState([1,2,3,4,5,6,7,8,9,10,11])
+  const [users, setUsers] = useState([1,2,3])
   useEffect(() => {
     if (user?.uid)
       getUsers()
   }, [])
 
   const getUsers = async () => {
-    //fetch users
-    const q = query(usersRef, where('userId', '!=', user?.uid))
-
-    const querySnapshot = await getDocs(q)
-    let data = []
-    querySnapshot.forEach(doc => {
-      data.push(...doc.data)
-    })
-    setUsers(data)
-    console.log("got users: ", data)
+    try {
+      const q = query(usersRef, where('userId', '!=', user?.uid))
+      const querySnapshot = await getDocs(q)
+      let data = []
+      querySnapshot.forEach(doc => {
+        data.push(doc.data())
+      })
+      setUsers(data)
+      console.log("got users: ", data)
+    } catch (error) {
+      console.error("Erro ao buscar usuários: ", error)
+    }
   }
+  
 
 
   
