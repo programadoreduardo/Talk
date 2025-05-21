@@ -1,12 +1,12 @@
 import { View, Text, StatusBar, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import ChatRoomHeader from '../../components/chatRoomHeader';
 import MessagesList from '../../components/MessagesList';
 import { useAuth } from '../../context/authContext';
 import { Feather } from '@expo/vector-icons';
-import { addDoc, collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, onSnapshot, setDoc, Timestamp, query, orderBy } from 'firebase/firestore';
 import { getRoomId } from '../../utils/common';
 import { db } from '../../firebaseConfig';
 
@@ -16,9 +16,24 @@ const ChatRoom = () => {
     const router = useRouter()
     const [messages, setMessages] = useState([]) // Lista de mensagens
     const [messageText, setMessageText] = useState('') // Mensagem atual sendo digitada
+    const inputRef = useRef(null) // Referência para o TextInput
 
     useEffect(() => {
         createRoomIfNotExists()
+
+        let roomId = getRoomId(user?.userId, item?.userId)
+        const docRef = doc(db, 'rooms', roomId)
+        const messagesRef = collection(docRef, 'messages')
+        const q = query(messagesRef, orderBy('createdAt', 'asc'))
+
+        let unsub = onSnapshot(q, (querySnapshot) => {
+            let allMessages = querySnapshot.docs.map(doc => {
+                return doc.data();
+            })
+            setMessages([...allMessages])
+        })
+
+        return unsub;
     }, [])
 
     const createRoomIfNotExists = async () => {
@@ -29,7 +44,7 @@ const ChatRoom = () => {
             }
 
             const roomId = getRoomId(user?.uid, item?.userId);
-            
+
             await setDoc(doc(db, 'rooms', roomId), {
                 roomId,
                 createdAt: Timestamp.fromDate(new Date()),
@@ -44,34 +59,32 @@ const ChatRoom = () => {
     }
 
     const handleSendMessage = async () => {
-        const text = messageText.trim()
-        if (!text || !user?.uid || !item?.userId) return
-        
+        let text = messageText.trim()
+        if (!messages) return;
         try {
-            const roomId = getRoomId(user?.uid, item?.userId)
-            const messagesRef = collection(db, 'rooms', roomId, 'messages')
-            
-            await addDoc(messagesRef, {
+            let roomId = getRoomId(user?.userId, item?.userId)
+            const docRef = doc(db, 'rooms', roomId)
+            const messagesRef = collection(docRef, 'messages')
+
+
+            if (inputRef.current) inputRef.current.clear()
+
+
+            const newDoc = await addDoc(messagesRef, {
                 userId: user?.uid,
-                text: text,
+                message: text,
                 profileUrl: user?.profileUrl,
                 senderName: user?.username,
-                createdAt: Timestamp.fromDate(new Date())
+                createdAt: Timestamp.fromDate(new Date()),
             })
-            
-            // Atualiza a última mensagem na sala
-            await setDoc(doc(db, 'rooms', roomId), {
-                lastMessage: text,
-                lastUpdated: Timestamp.fromDate(new Date())
-            }, { merge: true })
-            
-            setMessageText('') // Limpa o input após enviar
+
+            console.log("Message sent with ID: ", newDoc.id)
         } catch (err) {
             Alert.alert('Erro', 'Não foi possível enviar a mensagem')
             console.error("Send message error:", err)
         }
     }
-
+console.log("Messages: ", messages)
     return (
         <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
@@ -83,11 +96,12 @@ const ChatRoom = () => {
 
                 <View className='flex-1 justify-between bg-neutral-100 overflow-visible'>
                     <View className='flex-1'>
-                        <MessagesList messages={messages} currentUserId={user?.uid} />
+                        <MessagesList messages={messages} currentUser={user} />
                     </View>
                     <View style={{ marginBottom: hp(2.7) }} className='pt-2'>
                         <View className='flex-row justify-between bg-white border mx-3 p-2 border-neutral-300 rounded-full pl-3 pr-2'>
                             <TextInput
+                                ref={inputRef}
                                 value={messageText}
                                 onChangeText={setMessageText}
                                 placeholder='Mensagem...'
@@ -95,8 +109,8 @@ const ChatRoom = () => {
                                 className='flex-1 mx-2'
                                 style={{ fontSize: hp(1.6) }}
                             />
-                            <TouchableOpacity 
-                                onPress={handleSendMessage} 
+                            <TouchableOpacity
+                                onPress={handleSendMessage}
                                 className='bg-neutral-200 p-2 mr-[1px] rounded-full'>
                                 <Feather name="send" size={hp(2.7)} color="#737373" />
                             </TouchableOpacity>
