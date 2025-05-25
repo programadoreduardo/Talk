@@ -1,6 +1,6 @@
-import { View, Text, StatusBar, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native'
-import { useEffect, useState, useRef } from 'react'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { View, Text, StatusBar, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import ChatRoomHeader from '../../components/chatRoomHeader';
 import MessagesList from '../../components/MessagesList';
@@ -11,39 +11,50 @@ import { getRoomId } from '../../utils/common';
 import { db } from '../../firebaseConfig';
 
 const ChatRoom = () => {
-    const item = useLocalSearchParams()
+    const item = useLocalSearchParams();
     const { user } = useAuth();
-    const router = useRouter()
-    const [messages, setMessages] = useState([]) // Lista de mensagens
-    const [messageText, setMessageText] = useState('') // Mensagem atual sendo digitada
-    const inputRef = useRef(null) // Referência para o TextInput
+    const router = useRouter();
+    const [messages, setMessages] = useState([]);
+    const [messageText, setMessageText] = useState('');
+    const inputRef = useRef(null);
 
     useEffect(() => {
-        createRoomIfNotExists()
+        createRoomIfNotExists();
 
-        let roomId = getRoomId(user?.userId, item?.userId)
-        const docRef = doc(db, 'rooms', roomId)
-        const messagesRef = collection(docRef, 'messages')
-        const q = query(messagesRef, orderBy('createdAt', 'asc'))
+        let roomId = getRoomId(user?.userId, item?.userId);
+        console.log("ChatRoom roomId:", roomId);
+        
+        const docRef = doc(db, 'rooms', roomId);
+        const messagesRef = collection(docRef, 'messages');
+        const q = query(messagesRef, orderBy('createdAt', 'asc'));
 
-        let unsub = onSnapshot(q, (querySnapshot) => {
-            let allMessages = querySnapshot.docs.map(doc => {
-                return doc.data();
-            })
-            setMessages([...allMessages])
-        })
+        let unsub = onSnapshot(q, 
+            (querySnapshot) => {
+                let allMessages = querySnapshot.docs.map(doc => {
+                    console.log("ChatRoom message:", doc.data());
+                    return doc.data();
+                });
+                setMessages([...allMessages]);
+            },
+            (error) => {
+                console.error("ChatRoom snapshot error:", error);
+            }
+        );
 
         return unsub;
-    }, [])
+    }, []);
 
     const createRoomIfNotExists = async () => {
         try {
+            console.log("Creating room with IDs:", user?.uid, item?.userId);
+            
             if (!user?.uid || !item?.userId) {
                 console.log("Missing user IDs - current user:", user?.uid, "other user:", item?.userId);
                 return;
             }
 
             const roomId = getRoomId(user?.uid, item?.userId);
+            console.log("Creating room with ID:", roomId);
 
             await setDoc(doc(db, 'rooms', roomId), {
                 roomId,
@@ -51,40 +62,36 @@ const ChatRoom = () => {
                 participants: [user?.uid, item?.userId],
                 participantNames: [user?.username, item?.username],
                 lastUpdated: Timestamp.fromDate(new Date())
-            }, { merge: true }); // Usamos merge: true para não sobrescrever mensagens existentes
-
+            }, { merge: true });
         } catch (error) {
             console.error("Error creating room:", error);
         }
-    }
+    };
 
     const handleSendMessage = async () => {
-        let text = messageText.trim()
-        if (!messages) return;
+        let text = messageText.trim();
+        if (!text) return;
+        
         try {
-            let roomId = getRoomId(user?.userId, item?.userId)
-            const docRef = doc(db, 'rooms', roomId)
-            const messagesRef = collection(docRef, 'messages')
+            let roomId = getRoomId(user?.userId, item?.userId);
+            const docRef = doc(db, 'rooms', roomId);
+            const messagesRef = collection(docRef, 'messages');
 
+            if (inputRef.current) inputRef.current.clear();
 
-            if (inputRef.current) inputRef.current.clear()
-
-
-            const newDoc = await addDoc(messagesRef, {
+            await addDoc(messagesRef, {
                 userId: user?.uid,
                 message: text,
                 profileUrl: user?.profileUrl,
                 senderName: user?.username,
                 createdAt: Timestamp.fromDate(new Date()),
-            })
-
-            console.log("Message sent with ID: ", newDoc.id)
+            });
         } catch (err) {
-            Alert.alert('Erro', 'Não foi possível enviar a mensagem')
-            console.error("Send message error:", err)
+            Alert.alert('Erro', 'Não foi possível enviar a mensagem');
+            console.error("Send message error:", err);
         }
-    }
-console.log("Messages: ", messages)
+    };
+
     return (
         <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
@@ -119,7 +126,7 @@ console.log("Messages: ", messages)
                 </View>
             </View>
         </ScrollView>
-    )
-}
+    );
+};
 
-export default ChatRoom
+export default ChatRoom;
